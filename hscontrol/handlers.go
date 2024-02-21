@@ -115,6 +115,46 @@ func (h *Headscale) KeyHandler(
 	}
 }
 
+func (h *Headscale) ReloadHandler(
+	writer http.ResponseWriter,
+	req *http.Request,
+) {
+	log.Info().
+		Msg("/-/reload called, reloading ACL and Config")
+	respond := func(err error) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+		res := struct {
+			Status string `json:"status"`
+		}{
+			Status: "success",
+		}
+
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			log.Error().Caller().Err(err).Msg("reload failed")
+			res.Status = "fail"
+		}
+
+		buf, err := json.Marshal(res)
+		if err != nil {
+			log.Error().Caller().Err(err).Msg("marshal failed")
+		}
+		_, err = writer.Write(buf)
+		if err != nil {
+			log.Error().Caller().Err(err).Msg("write failed")
+		}
+	}
+
+	if err := h.TriggerReload(); err != nil {
+		respond(err)
+
+		return
+	}
+
+	respond(nil)
+}
+
 func (h *Headscale) HealthHandler(
 	writer http.ResponseWriter,
 	req *http.Request,

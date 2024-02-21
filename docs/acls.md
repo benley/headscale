@@ -187,3 +187,14 @@ Here are the ACL's to implement the same permissions as above:
   ]
 }
 ```
+
+## Reloading at runtime
+
+There are two ways to trigger reloading ACLs from disk at runtime:
+
+- Send SIGHUP to the Headscale process
+- http POST to `/-/reload`
+
+The http method can be useful in containerized deployments, using tools like
+[configmap-reload](https://github.com/jimmidyson/configmap-reload) on
+Kubernetes.

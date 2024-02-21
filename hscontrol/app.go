@@ -450,6 +450,7 @@ func (h *Headscale) createRouter(grpcMux *grpcRuntime.ServeMux) *mux.Router {
 
 	router.HandleFunc(ts2021UpgradePath, h.NoiseUpgradeHandler).Methods(http.MethodPost)
 
+	router.HandleFunc("/-/reload", h.ReloadHandler).Methods(http.MethodPost)
 	router.HandleFunc("/health", h.HealthHandler).Methods(http.MethodGet)
 	router.HandleFunc("/key", h.KeyHandler).Methods(http.MethodGet)
 	router.HandleFunc("/register/{mkey}", h.RegisterWebAPI).Methods(http.MethodGet)
@@ -759,25 +760,8 @@ func (h *Headscale) Serve() error {
 				log.Info().
 					Str("signal", sig.String()).
 					Msg("Received SIGHUP, reloading ACL and Config")
-
-				// TODO(kradalby): Reload config on SIGHUP
-
-				if h.cfg.ACL.PolicyPath != "" {
-					aclPath := util.AbsolutePathFromConfigPath(h.cfg.ACL.PolicyPath)
-					pol, err := policy.LoadACLPolicyFromPath(aclPath)
-					if err != nil {
-						log.Error().Err(err).Msg("Failed to reload ACL policy")
-					}
-
-					h.ACLPolicy = pol
-					log.Info().
-						Str("path", aclPath).
-						Msg("ACL policy successfully reloaded, notifying nodes of change")
-
-					ctx := types.NotifyCtx(context.Background(), "acl-sighup", "na")
-					h.nodeNotifier.NotifyAll(ctx, types.StateUpdate{
-						Type: types.StateFullUpdate,
-					})
+				if err := h.TriggerReload(); err != nil {
+					log.Error().Err(err).Msg("Reload failed")
 				}
 
 			default:
@@ -973,4 +957,28 @@ func readOrCreatePrivateKey(path string) (*key.MachinePrivate, error) {
 	}
 
 	return &machineKey, nil
+}
+
+func (h *Headscale) TriggerReload() error {
+	// TODO(kradalby): Reload config on SIGHUP
+
+	if h.cfg.ACL.PolicyPath != "" {
+		aclPath := util.AbsolutePathFromConfigPath(h.cfg.ACL.PolicyPath)
+		pol, err := policy.LoadACLPolicyFromPath(aclPath)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to reload ACL policy")
+			return err
+		}
+
+		h.ACLPolicy = pol
+		log.Info().
+			Str("path", aclPath).
+			Msg("ACL policy successfully reloaded, notifying nodes of change")
+
+		ctx := types.NotifyCtx(context.Background(), "acl-sighup", "na")
+		h.nodeNotifier.NotifyAll(ctx, types.StateUpdate{
+			Type: types.StateFullUpdate,
+		})
+	}
+	return nil
 }
