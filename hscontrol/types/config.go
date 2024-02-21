@@ -69,6 +69,7 @@ type Config struct {
 	CLI CLIConfig
 
 	ACL ACLConfig
+	HttpReloadEnabled bool
 }
 
 type SqliteConfig struct {
@@ -710,6 +711,8 @@ func GetHeadscaleConfig() (*Config, error) {
 		RandomizeClientPort: randomizeClientPort,
 
 		ACL: GetACLConfig(),
+
+		HttpReloadEnabled: viper.GetBool("http_reload_enabled"),
 
 		CLI: CLIConfig{
 			Address:  viper.GetString("cli.address"),

@@ -450,7 +450,6 @@ func (h *Headscale) createRouter(grpcMux *grpcRuntime.ServeMux) *mux.Router {
 
 	router.HandleFunc(ts2021UpgradePath, h.NoiseUpgradeHandler).Methods(http.MethodPost)
 
-	router.HandleFunc("/-/reload", h.ReloadHandler).Methods(http.MethodPost)
 	router.HandleFunc("/health", h.HealthHandler).Methods(http.MethodGet)
 	router.HandleFunc("/key", h.KeyHandler).Methods(http.MethodGet)
 	router.HandleFunc("/register/{mkey}", h.RegisterWebAPI).Methods(http.MethodGet)
@@ -473,6 +472,10 @@ func (h *Headscale) createRouter(grpcMux *grpcRuntime.ServeMux) *mux.Router {
 		router.HandleFunc("/derp", h.DERPServer.DERPHandler)
 		router.HandleFunc("/derp/probe", derpServer.DERPProbeHandler)
 		router.HandleFunc("/bootstrap-dns", derpServer.DERPBootstrapDNSHandler(h.DERPMap))
+	}
+
+	if h.cfg.HttpReloadEnabled {
+		router.HandleFunc("/-/reload", h.ReloadHandler).Methods(http.MethodPost)
 	}
 
 	apiRouter := router.PathPrefix("/api").Subrouter()

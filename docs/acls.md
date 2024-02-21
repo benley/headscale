@@ -193,7 +193,7 @@ Here are the ACL's to implement the same permissions as above:
 There are two ways to trigger reloading ACLs from disk at runtime:
 
 - Send SIGHUP to the Headscale process
-- http POST to `/-/reload`
+- http POST to `/-/reload` (only if `http_reload_enabled: true` is set in your config)
 
 The http method can be useful in containerized deployments, using tools like
 [configmap-reload](https://github.com/jimmidyson/configmap-reload) on
