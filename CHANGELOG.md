@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.25.1-singlestore1
+
+ - OIDC: Fetch UserInfo to get EmailVerified if necessary
+   [#2493](https://github.com/juanfont/headscale/pull/2493)
+
 ## 0.25.1 (2025-02-25)
 
 ### Changes
